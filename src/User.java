@@ -1,28 +1,37 @@
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.Serializable;
+
 public class User
 {
     private String nome;
     private String password;
-    private Localizacao localizacao;
+    private Integer localizacaoX;
+    private Integer localizacaoY;
 
     User(User user)
     {
         this.nome = user.getNome();
         this.password = user.getPassword();
-        this.localizacao = user.localizacao;
+        this.localizacaoX = user.getLocalizacaoX();
+        this.localizacaoY = user.getLocalizacaoY();
     }
 
     public User()
     {
         this.nome = "";
         this.password = "";
-        this.localizacao = new Localizacao();
+        this.localizacaoX = null;
+        this.localizacaoY = null;
     }
 
-    public User(String nome, String password, Localizacao localizacao)
+    public User(String nome, String password, Integer x, Integer y)
     {
         this.nome = nome;
         this.password = password;
-        this.localizacao = localizacao;
+        this.localizacaoX = x;
+        this.localizacaoY = y;
     }
 
     public String getNome()
@@ -45,14 +54,24 @@ public class User
         this.password = password;
     }
 
-    public Localizacao getLocalizacao()
+    public Integer getLocalizacaoX()
     {
-        return this.localizacao;
+        return this.localizacaoX;
     }
 
-    public void setLocalizacao(Localizacao localizacao)
+    public Integer getLocalizacaoY()
     {
-        this.localizacao = localizacao;
+        return this.localizacaoY;
+    }
+
+    public void setLocalizacaoX(Integer localizacao)
+    {
+        this.localizacaoX = localizacao;
+    }
+
+    public void setLocalizacaoY(Integer localizacao)
+    {
+        this.localizacaoY = localizacao;
     }
 
     @Override
@@ -66,6 +85,27 @@ public class User
     {
         return  "Nome: " + this.nome + "\n" +
                 "Password: " + this.password + "\n" +
-                this.localizacao;
+                "Localizacao X: " + this.localizacaoX + "\n" +
+                "Localizacao Y: " + this.localizacaoY;
+    }
+
+    public static User deserialize(DataInputStream in) throws IOException
+    {
+        String nome = in.readUTF();
+        String password = in.readUTF();
+        Integer localizacaoX = in.readInt();
+        Integer localizacaoY = in.readInt();
+
+        return new User(nome, password, localizacaoX, localizacaoY);
+    }
+
+    public void serialize(DataOutputStream out) throws IOException
+    {
+        out.writeUTF(this.nome);
+        out.writeUTF(this.password);
+        out.writeInt(this.localizacaoX);
+        out.writeInt(this.localizacaoY);
+
+        out.flush();
     }
 }
