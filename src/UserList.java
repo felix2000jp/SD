@@ -1,6 +1,5 @@
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
@@ -27,7 +26,7 @@ public class UserList
         lock.lock();
         try
         {
-            users.add(user);
+            this.users.add(user);
         }
         finally
         {
