@@ -1,9 +1,13 @@
+import java.io.DataInputStream;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Mapa
 {
-    Map< Integer, UserList> mapa;
+    private Map< Integer, UserList> mapa;
+    private ReentrantLock lock = new ReentrantLock();
 
     Mapa(Mapa mapa)
     {
@@ -14,7 +18,7 @@ public class Mapa
     {
         this.mapa = new HashMap<>();
 
-        for(int i = 1; i <= 400; i++)
+        for(int i = 1; i <= 4; i++)
         {
             this.mapa.put(i,new UserList());
         }

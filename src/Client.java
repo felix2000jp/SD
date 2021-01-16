@@ -37,8 +37,22 @@ public class Client
                     {
                         User newUser = parseLine(input);
                         newUser.serialize(out);
+                        out.flush();
+                        System.out.println(in.readUTF());
                     }
                     break;
+
+                case 3:
+                    System.out.println(in.readUTF());
+                    if( (input = line.readLine()) != null )
+                    {
+                        Integer local = Integer.parseInt(input);
+                        out.writeInt(local);
+                        out.flush();
+                        System.out.println("Numero de Utilizadores: " + in.readInt());
+                    }
+                    break;
+
                 default:
             }
         }

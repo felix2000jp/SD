@@ -19,19 +19,27 @@ class ServerWorker implements Runnable {
             DataInputStream in = new DataInputStream(new BufferedInputStream(this.socket.getInputStream()));
             boolean isOpen = true;
 
-            int adiciona = 1;
+            int query         = -1;
+            int adiciona      = 1;
+            int atualizaLocal = 2;
+            int listaLocal    = 3;
 
             while (isOpen)
             {
                 try
                 {
-                    if(in.readInt() == adiciona)
+                    query = in.readInt();
+
+                    if(query == adiciona)
                     {
                         String msgAdiciona = "Indique neste formato: \n nome password localizacao";
                         out.writeUTF(msgAdiciona);
                         out.flush();
-
                         this.users.addUser(in);
+                        msgAdiciona = "Adicionado com Sucesso";
+                        out.writeUTF(msgAdiciona);
+                        out.flush();
+
                         int n = 0;
                         for(User user : users.getUsers())
                         {
@@ -42,6 +50,25 @@ class ServerWorker implements Runnable {
                             System.out.println("\n");
                         }
                     }
+
+                    if(query == atualizaLocal)
+                    {
+
+                    }
+
+                    if(query == listaLocal)
+                    {
+                        String msgLista = "Que Localizacao pretende consultar?";
+                        out.writeUTF(msgLista);
+                        out.flush();
+                        int n = this.users.numeroLocal(in);
+                        out.writeInt(n);
+                        out.flush();
+                        System.out.println("Numero de Utilizadores: " + n);
+                    }
+
+
+
                     else ;
                 }
                 catch (EOFException e)
@@ -67,9 +94,9 @@ public class Server {
     public static void main (String[] args) throws IOException {
         ServerSocket serverSocket = new ServerSocket(12345);
         UserList users = new UserList();
-
         Mapa mapa = new Mapa();
-        mapa.printa();
+
+        //mapa.printa();
 
         while (true)
         {
