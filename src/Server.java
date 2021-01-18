@@ -1,47 +1,107 @@
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 
 class ServerWorker implements Runnable {
     private Socket socket;
+    private UserList users;
 
-    public ServerWorker (Socket socket) {
+    public ServerWorker(Socket socket, UserList users) {
         this.socket = socket;
+        this.users = users;
     }
 
-    // @TODO
     @Override
     public void run() {
-        try {
-            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            PrintWriter out = new PrintWriter(socket.getOutputStream());
 
-            String line;
-            while ((line = in.readLine()) != null) {
-                out.println(line);
-                out.flush();
+        try {
+            DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+            DataInputStream in = new DataInputStream(new BufferedInputStream(this.socket.getInputStream()));
+            boolean isOpen = true;
+
+            int query         = -1;
+            int adiciona      = 1;
+            int atualizaLocal = 2;
+            int listaLocal    = 3;
+
+            while (isOpen)
+            {
+                try
+                {
+                    query = in.readInt();
+
+                    if(query == adiciona)
+                    {
+                        String msgAdiciona = "Indique neste formato: \n nome password localizacao";
+                        out.writeUTF(msgAdiciona);
+                        out.flush();
+                        this.users.addUser(in);
+                        msgAdiciona = "Adicionado com Sucesso";
+                        out.writeUTF(msgAdiciona);
+                        out.flush();
+
+                        int n = 0;
+                        for(User user : users.getUsers())
+                        {
+                            n++;
+                            System.out.println(user.toString());
+                            System.out.println(n);
+                            System.out.println("--------------");
+                            System.out.println("\n");
+                        }
+                    }
+
+                    if(query == atualizaLocal)
+                    {
+
+                    }
+
+                    if(query == listaLocal)
+                    {
+                        String msgLista = "Que Localizacao pretende consultar?";
+                        out.writeUTF(msgLista);
+                        out.flush();
+                        int n = this.users.numeroLocal(in);
+                        out.writeInt(n);
+                        out.flush();
+                        System.out.println("Numero de Utilizadores: " + n);
+                    }
+
+
+
+                    else ;
+                }
+                catch (EOFException e)
+                {
+                    isOpen = false;
+                }
             }
 
-            socket.shutdownOutput();
             socket.shutdownInput();
-        }catch (IOException e){
-            System.out.println("Foi a vida");
+            socket.close();
+
         }
+        catch (IOException e)
+        {
+            System.out.println("IO Exception");
+        }
+
     }
 }
-
 
 public class Server {
 
     public static void main (String[] args) throws IOException {
         ServerSocket serverSocket = new ServerSocket(12345);
+        UserList users = new UserList();
+        Mapa mapa = new Mapa();
 
-        while (true) {
+        //mapa.printa();
+
+        while (true)
+        {
             Socket socket = serverSocket.accept();
-            Thread worker = new Thread(new ServerWorker(socket));
+            Thread worker = new Thread(new ServerWorker(socket, users));
             worker.start();
         }
     }

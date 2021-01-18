@@ -1,34 +1,62 @@
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.Arrays;
 
-public class Client {
+public class Client
+{
 
-    public static void main(String[] args) {
-        try {
-            Socket socket = new Socket("localhost", 12345);
+    public static User parseLine (String userInput)
+    {
+        String[] tokens = userInput.split(" ");
 
-            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            PrintWriter out = new PrintWriter(socket.getOutputStream());
+            if (tokens[2].equals("null")) tokens[2] = null;
+        return new User(tokens[0], tokens[1], Integer.parseInt(tokens[2]));
+    }
 
-            BufferedReader systemIn = new BufferedReader(new InputStreamReader(System.in));
 
-            String userInput;
-            while ((userInput = systemIn.readLine()) != null) {
-                out.println(userInput);
-                out.flush();
+    public static void main (String[] args) throws IOException
+    {
+        Socket socket = new Socket("localhost", 12345);
+        DataInputStream in = new DataInputStream( new BufferedInputStream(socket.getInputStream()) );
+        DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+        BufferedReader line = new BufferedReader(new InputStreamReader(System.in));
+        String input;
 
-                String response = in.readLine();
-                System.out.println("Server response: " + response);
+        int userInput;
+        while ( (userInput = Integer.parseInt(line.readLine()) ) != 0)
+        {
+            out.writeInt(userInput);
+            out.flush();
+
+            switch (userInput)
+            {
+                case 1:
+                    System.out.println(in.readUTF());
+                    if( (input = line.readLine()) != null )
+                    {
+                        User newUser = parseLine(input);
+                        newUser.serialize(out);
+                        out.flush();
+                        System.out.println(in.readUTF());
+                    }
+                    break;
+
+                case 3:
+                    System.out.println(in.readUTF());
+                    if( (input = line.readLine()) != null )
+                    {
+                        Integer local = Integer.parseInt(input);
+                        out.writeInt(local);
+                        out.flush();
+                        System.out.println("Numero de Utilizadores: " + in.readInt());
+                    }
+                    break;
+
+                default:
             }
-
-            socket.shutdownOutput();
-            socket.shutdownInput();
-            socket.close();
-
-        } catch (Exception e) {
-            e.printStackTrace();
         }
+
+        socket.close();
     }
 }

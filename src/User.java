@@ -1,28 +1,33 @@
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.Serializable;
+
 public class User
 {
     private String nome;
     private String password;
-    private Localizacao localizacao;
+    private Integer localizacao;
 
     User(User user)
     {
         this.nome = user.getNome();
         this.password = user.getPassword();
-        this.localizacao = user.localizacao;
+        this.localizacao = user.getLocalizacao();
     }
 
     public User()
     {
         this.nome = "";
         this.password = "";
-        this.localizacao = new Localizacao();
+        this.localizacao = null;
     }
 
-    public User(String nome, String password, Localizacao localizacao)
+    public User(String nome, String password, Integer x)
     {
         this.nome = nome;
         this.password = password;
-        this.localizacao = localizacao;
+        this.localizacao = x;
     }
 
     public String getNome()
@@ -45,12 +50,12 @@ public class User
         this.password = password;
     }
 
-    public Localizacao getLocalizacao()
+    public Integer getLocalizacao()
     {
         return this.localizacao;
     }
 
-    public void setLocalizacao(Localizacao localizacao)
+    public void setLocalizacao(Integer localizacao)
     {
         this.localizacao = localizacao;
     }
@@ -64,8 +69,26 @@ public class User
     @Override
     public String toString()
     {
-        return  "Nome: " + this.nome + "\n" +
-                "Password: " + this.password + "\n" +
-                this.localizacao;
+        return  "Nome:        " + this.nome + "\n" +
+                "Password:    " + this.password + "\n" +
+                "Localizacao: " + this.localizacao;
+    }
+
+    public static User deserialize(DataInputStream in) throws IOException
+    {
+        String nome = in.readUTF();
+        String password = in.readUTF();
+        Integer localizacao = in.readInt();
+
+        return new User(nome, password, localizacao);
+    }
+
+    public void serialize(DataOutputStream out) throws IOException
+    {
+        out.writeUTF(this.nome);
+        out.writeUTF(this.password);
+        out.writeInt(this.localizacao);
+
+        out.flush();
     }
 }
