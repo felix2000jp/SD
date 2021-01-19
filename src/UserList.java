@@ -1,33 +1,37 @@
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 
-public class UserList implements Iterable<User>
+public class UserList
 {
-    private List<User> users;
+    private Map<String, User> users;
+    private List<String> usersLogin;
     private ReentrantLock lock = new ReentrantLock();
 
     public UserList()
     {
-        this.users = new ArrayList<>();
+        this.users = new HashMap<>();
+        this.usersLogin = new ArrayList<>();
     }
 
-    public List<User> getUsers()
+    public Map<String, User> getUsers()
     {
         return this.users;
     }
 
-    public void addUser(DataInputStream in) throws IOException
+    public boolean addUser(DataInputStream in) throws IOException
     {
         User user = User.deserialize(in);
         lock.lock();
         try
         {
-            this.users.add(user);
+            boolean b = !this.users.containsKey(user.getNome());
+            if(b)
+                this.users.put(user.getNome(), user);
+
+            return b;
         }
         finally
         {
@@ -38,26 +42,50 @@ public class UserList implements Iterable<User>
     public Integer numeroLocal(DataInputStream in) throws IOException {
         int n = 0;
         int tatau = in.readInt();
+        try {
+            lock.lock();
 
-        for(User user : this.users)
-        {
-            if(user.getLocalizacao() ==  tatau) n++;
+            for(User user : this.users.values())
+            {
+                if(user.getLocalizacao() ==  tatau) n++;
+            }
+
+            return n;
+        }finally {
+            lock.unlock();
         }
-
-        return n;
     }
 
     public void printUser()
     {
-        for(User user : users)
+        lock.lock();
+        for(User user : this.users.values())
         {
             System.out.println(user);
         }
+        lock.unlock();
     }
 
-    @Override
-    public Iterator<User> iterator()
-    {
-        return this.users.iterator();
+    public boolean login(String nome, String pass){
+        boolean b = true;
+        User u;
+        try {
+            lock.lock();
+            if((u = this.users.get(nome)) == null || !u.getPassword().equals(pass)) {
+                b = false;
+            }
+            else {
+                this.usersLogin.add(nome);
+            }
+            return b;
+        }finally {
+            lock.unlock();
+        }
+    }
+
+    public void atualizaLocalizacao(String nome, int localizacao){
+        lock.lock();
+        this.users.get(nome).setLocalizacao(localizacao);
+        lock.unlock();
     }
 }
