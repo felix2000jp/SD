@@ -3,18 +3,17 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
-
 public class UserList
 {
     private Map<String, User> users;
     private Set<String> usersLogin;
-    private Set<String> doenteInfetadoComOVirusCoronaVirusDezanoveTambemConhecidoComoSARSCOV2;
+    private Set<String> doentes;
     private ReentrantLock lock = new ReentrantLock();
 
     public UserList()
     {
         this.users = new HashMap<>();
-        this.doenteInfetadoComOVirusCoronaVirusDezanoveTambemConhecidoComoSARSCOV2 = new HashSet<>();
+        this.doentes = new HashSet<>();
         this.usersLogin = new HashSet<>();
     }
 
@@ -23,85 +22,81 @@ public class UserList
         return this.users;
     }
 
-    public boolean addUser(DataInputStream in) throws IOException{
-        try {
-            lock.lock();
+    public boolean addUser(DataInputStream in) throws IOException
+    {
+        try
+        {
             User user = User.deserialize(in);
+
+            lock.lock();
             boolean b = !this.users.containsKey(user.getNome());
-            if (b)
-                this.users.put(user.getNome(), user);
+            if (b) this.users.put(user.getNome(), user);
 
             return b;
         }
-        finally {
+        finally
+        {
             lock.unlock();
         }
     }
 
-    public Integer numeroLocal(DataInputStream in) throws IOException, InterruptedException {
-        int n = 0;
-        int local = in.readInt();
-        int controlo = 0;
-        try {
-            lock.lock();
-
-            for(User user : this.users.values())
-            {
-                user.rw.readLock().lock();
-            }
-
-            Thread.sleep(10000);
-            controlo = 1;
-
-            lock.unlock();
-
-            controlo = 2;
-
-            for(User user : this.users.values())
-            {
-                if(user.getLocalizacao() ==  local) n++;
-                user.rw.readLock().unlock();
-            }
-
-            controlo = 3;
-
-            return n;
-        }finally {
-            if(controlo == 1) {
-                lock.unlock();
-            }
-            if(controlo <= 2){
-                for(User user : this.users.values())
-                {
-                    user.rw.readLock().unlock();
-                }
-            }
-        }
-    }
-
-    public void printUser()
+    public Integer numeroLocal(DataInputStream in) throws IOException
     {
+        int n = 0;
+        String local = in.readUTF();
+        String[] tokens = local.split(" ");
+        int localizacaoX = Integer.parseInt(tokens[0]);
+        int localizacaoY = Integer.parseInt(tokens[1]);
+
         lock.lock();
+
         for(User user : this.users.values())
         {
-            System.out.println(user);
+            user.rw.readLock().lock();
         }
+
+        //Thread.sleep(10000);
+
         lock.unlock();
+
+        for(User user : this.users.values())
+        {
+            if(user.getLocalizacaoX() == localizacaoX && user.getLocalizacaoY() == localizacaoY) n++;
+            user.rw.readLock().unlock();
+        }
+        return n;
     }
 
-    public synchronized Integer login(String nome, String pass){
-        Integer msg = 0;
-        User u;
-        if((u = this.users.get(nome)) == null || !u.getPassword().equals(pass)) msg = 1;
-        else if( this.doenteInfetadoComOVirusCoronaVirusDezanoveTambemConhecidoComoSARSCOV2.contains(nome) ) msg = 2;
-        else if( !this.usersLogin.add(nome) ) msg = 3;
-        return msg;
-    }
-
-
-    public Integer terminaSessao(String nome){
+    public Integer login(DataInputStream in) throws IOException
+    {
         try
         {
+            lock.lock();
+
+            String login = in.readUTF();
+            String[] tokens = login.split(" ");
+            String nome = tokens[0];
+            String pass = tokens[1];
+            Integer msg = 0;
+            User u;
+
+            if((u = this.users.get(nome)) == null || !u.getPassword().equals(pass)) msg = 1;
+            else if( this.doentes.contains(nome) ) msg = 2;
+            else if( !this.usersLogin.add(nome) ) msg = 3;
+            return msg;
+        }
+        finally
+        {
+            lock.unlock();
+        }
+    }
+
+    public Integer terminaSessao(DataInputStream in) throws IOException
+    {
+        try
+        {
+            String nome = in.readUTF();
+
             lock.lock();
             this.usersLogin.remove(nome);
             return 0;
@@ -112,11 +107,14 @@ public class UserList
         }
     }
 
-    public Integer infetado(String nome){
+    public Integer infetado(DataInputStream in) throws IOException
+    {
         try
         {
+            String nome = in.readUTF();
+
             lock.lock();
-            this.doenteInfetadoComOVirusCoronaVirusDezanoveTambemConhecidoComoSARSCOV2.add(nome);
+            this.doentes.add(nome);
             return 0;
         }
         finally
@@ -125,34 +123,27 @@ public class UserList
         }
     }
 
-    public void atualizaLocalizacao(String nome, int localizacao){
-        int controlo = 0;
-        User u = new User();
-        try
-        {
-            lock.lock();
-            u = this.users.get(nome);
-            u.rw.writeLock().lock();
+    public void atualizaLocalizacao(DataInputStream in) throws IOException
+    {
+        User u;
 
-            controlo = 1;
-            lock.unlock();
-            controlo = 2;
+        lock.lock();
+        String nome = in.readUTF();
+        System.out.println(nome);
+        String local = in.readUTF();
+        String[] tokens = local.split(" ");
+        Integer localizacaoX = Integer.parseInt(tokens[0]);
+        Integer localizacaoY = Integer.parseInt(tokens[1]);
 
-            u.setLocalizacao(localizacao);
-            u.rw.writeLock().unlock();
-            controlo = 3;
-        }
-        finally
-        {
-            if(controlo == 1) {
-                lock.unlock();
-            }
-            if(controlo <= 2)
-                u.rw.writeLock().unlock();
+        u = this.users.get(nome);
+        u.rw.writeLock().lock();
 
-        }
+        lock.unlock();
 
+        u.setLocalizacaoX(localizacaoX);
+        u.setLocalizacaoY(localizacaoY);
 
+        u.rw.writeLock().unlock();
 
     }
 

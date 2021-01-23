@@ -7,22 +7,20 @@ public class Client
     private static User parseLine (String userInput)
     {
         String[] tokens = userInput.split(" ");
+        if (tokens[2].equals("null")) tokens[2] = null;
+        if (tokens[3].equals("null")) tokens[3] = null;
 
-            if (tokens[2].equals("null")) tokens[2] = null;
-        return new User(tokens[0], tokens[1], Integer.parseInt(tokens[2]));
+        return new User(tokens[0], tokens[1], Integer.parseInt(tokens[2]), Integer.parseInt(tokens[3]));
     }
-
 
     public static void main (String[] args) throws IOException
     {
-        View view = new View();
         Socket socket = new Socket("localhost", 12345);
         DataInputStream in = new DataInputStream( new BufferedInputStream(socket.getInputStream()) );
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-        BufferedReader line = new BufferedReader(new InputStreamReader(System.in));
         String input;
         String eueueu = "";
-
+        String local;
         int userInput = -1;
         int cont  = 1;
         int login = -1;
@@ -31,35 +29,32 @@ public class Client
         {
             while (login == -1 && cont == 1)
             {
-                userInput = view.menu1();
+                userInput = View.menu1();
 
-                switch (userInput) {
+                switch (userInput)
+                {
                     case 1:
-                        input = view.registo();
+                        input = View.registoCliente();
                         if (input != null) {
                             out.writeInt(userInput + 10);
                             User newUser = parseLine(input);
                             newUser.serialize(out);
                             out.flush();
-                            System.out.println(in.readUTF());
+
+                            View.responde(in.readUTF());
                         }
                         break;
 
                     case 2:
-                        input = view.login();
-                        if (input != null) {
+                        input = View.loginCliente();
+                        if (input != null)
+                        {
                             out.writeInt(userInput + 10);
-
-                            String[] tokens = input.split(" ");
-                            out.writeUTF(tokens[0]);
-                            out.writeUTF(tokens[1]);
+                            out.writeUTF(input);
                             out.flush();
                             String resposta = in.readUTF();
-                            System.out.println(resposta);
-                            if (resposta.equals("Login efetuado com sucesso")) {
-                                login = 1;
-                                eueueu = tokens[0];
-                            }
+                            login = View.loginClienteOut(resposta);
+                            eueueu = View.loginClienteOut(resposta,input);
                         }
                         break;
                     case 3:
@@ -70,48 +65,47 @@ public class Client
 
             while (userInput != 0 && cont == 1)
             {
-                userInput = view.menu2();
+                userInput = View.menu2();
 
                 switch (userInput) {
-                    case 1:
-                        int local = view.nrPessoasPorLocal();
-                        out.writeInt(userInput + 20);
+                    case 1: // Numero de Pessoas numa localizacao
+                        local = View.nrPessoasPorLocal();
 
-                        out.writeInt(local);
+                        out.writeInt(userInput + 20);
+                        out.writeUTF(local);
                         out.flush();
-                        System.out.println("Numero de Utilizadores: " + in.readInt());
+                        View.nrPessoasPorLocalResponde(in.readInt());
                         break;
-                    case 2:
-                        local = view.atualizaLocalizacao();
-                        out.writeInt(userInput + 20);
+                    case 2: // Atualizar localizacao
+                        local = View.atualizaLocalizacao();
 
+                        out.writeInt(userInput + 20);
                         out.writeUTF(eueueu);
-                        out.writeInt(local);
+                        out.writeUTF(local);
                         out.flush();
-                        System.out.println("Alterou");
+                        View.responde("Alterou");
                         break;
-                    case 3:
-                        local = view.nrPessoasPorLocal();
-                        out.writeInt(userInput + 20);
+                    case 3: // Existem pessoa num local?
+                        local = View.nrPessoasPorLocal();
 
-                        out.writeInt(local);
+                        out.writeInt(userInput + 20);
+                        out.writeUTF(local);
                         out.flush();
-                        System.out.println(in.readUTF());
+                        View.responde(in.readUTF());
                         break;
-                    case 4:
+                    case 4: // Está Infetado
                         out.writeInt(userInput + 20);
-
                         out.writeUTF(eueueu);
-                        System.out.println(in.readUTF());
+                        View.responde(in.readUTF());
+
                         cont = -1;
                         break;
-                    case 5:
+                    case 5: // Au revoir
                         out.writeInt(userInput + 20);
-
                         out.writeUTF(eueueu);
                         out.flush();
                         userInput = 0;
-                        System.out.println(in.readUTF());
+                        View.responde(in.readUTF());
                         break;
 
                     default:
