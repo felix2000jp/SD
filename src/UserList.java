@@ -7,13 +7,15 @@ import java.util.concurrent.locks.ReentrantLock;
 public class UserList
 {
     private Map<String, User> users;
-    private List<String> usersLogin;
+    private Set<String> usersLogin;
+    private Set<String> doenteInfetadoComOVirusCoronaVirusDezanoveTambemConhecidoComoSARSCOV2;
     private ReentrantLock lock = new ReentrantLock();
 
     public UserList()
     {
         this.users = new HashMap<>();
-        this.usersLogin = new ArrayList<>();
+        this.doenteInfetadoComOVirusCoronaVirusDezanoveTambemConhecidoComoSARSCOV2 = new HashSet<>();
+        this.usersLogin = new HashSet<>();
     }
 
     public Map<String, User> getUsers()
@@ -41,13 +43,13 @@ public class UserList
 
     public Integer numeroLocal(DataInputStream in) throws IOException {
         int n = 0;
-        int tatau = in.readInt();
+        int local = in.readInt();
         try {
             lock.lock();
 
             for(User user : this.users.values())
             {
-                if(user.getLocalizacao() ==  tatau) n++;
+                if(user.getLocalizacao() ==  local) n++;
             }
 
             return n;
@@ -66,26 +68,64 @@ public class UserList
         lock.unlock();
     }
 
-    public boolean login(String nome, String pass){
-        boolean b = true;
+    public Integer login(String nome, String pass){
+        Integer msg = 0;
         User u;
-        try {
+        try
+        {
             lock.lock();
-            if((u = this.users.get(nome)) == null || !u.getPassword().equals(pass)) {
-                b = false;
-            }
-            else {
-                this.usersLogin.add(nome);
-            }
-            return b;
-        }finally {
+            if((u = this.users.get(nome)) == null || !u.getPassword().equals(pass)) msg = 1;
+            else if( this.doenteInfetadoComOVirusCoronaVirusDezanoveTambemConhecidoComoSARSCOV2.contains(nome) ) msg = 2;
+            else if( !this.usersLogin.add(nome) ) msg = 3;
+            return msg;
+        }
+        finally
+        {
+            lock.unlock();
+        }
+    }
+
+
+    public Integer terminaSessao(String nome){
+        try
+        {
+            lock.lock();
+            this.usersLogin.remove(nome);
+            return 0;
+        }
+        finally
+        {
+            lock.unlock();
+        }
+    }
+
+    public Integer infetado(String nome){
+        try
+        {
+            lock.lock();
+            this.doenteInfetadoComOVirusCoronaVirusDezanoveTambemConhecidoComoSARSCOV2.add(nome);
+            return 0;
+        }
+        finally
+        {
             lock.unlock();
         }
     }
 
     public void atualizaLocalizacao(String nome, int localizacao){
-        lock.lock();
-        this.users.get(nome).setLocalizacao(localizacao);
-        lock.unlock();
+        try
+        {
+            lock.lock();
+            this.users.get(nome).setLocalizacao(localizacao);
+        }
+        finally
+        {
+            lock.unlock();
+        }
+
+
+
     }
+
+
 }

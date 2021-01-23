@@ -25,6 +25,8 @@ class ServerWorker implements Runnable {
             int nrDePessoasPorLocal    = 3;
             int atualizaLocalizacao    = 4;
             int haAlguem               = 5;
+            int touInfetado            = 6;
+            int terminaSessao          = 7;
 
             boolean b;
 
@@ -63,12 +65,17 @@ class ServerWorker implements Runnable {
                         String msgAdiciona = "Indique neste formato: \nnome password";
                         out.writeUTF(msgAdiciona);
                         out.flush();
+                        int cond = users.login(in.readUTF(), in.readUTF());
 
-                        if(users.login(in.readUTF(), in.readUTF())) {
+                        if( cond == 0 )
+                        {
                             msgAdiciona = "Login efetuado com sucesso";
                         }
-                        else {
-                            msgAdiciona = "Erro ao efetuar login";
+                        else
+                        {
+                            if( cond == 1 ) msgAdiciona = "Nome e/ou Password Incorreta";
+                            else if( cond == 2 ) msgAdiciona = "Utilizador infetado";
+                            else msgAdiciona = "Já existe alguém logado nesta conta";
                         }
                         out.writeUTF(msgAdiciona);
                         out.flush();
@@ -110,7 +117,21 @@ class ServerWorker implements Runnable {
                         out.flush();
                     }
 
+                    if(query == terminaSessao)
+                    {
+                        this.users.terminaSessao(in.readUTF());
+                        String resposta = "Goodbye, Adeus, Au revoir, Auf Wiedersehen";
+                        out.writeUTF(resposta);
+                        out.flush();
+                    }
 
+                    if(query == touInfetado)
+                    {
+                        this.users.infetado(in.readUTF());
+                        String resposta = "R.I.P. \nPress f to pay respects";
+                        out.writeUTF(resposta);
+                        out.flush();
+                    }
                 }
                 catch (EOFException e)
                 {

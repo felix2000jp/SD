@@ -22,90 +22,100 @@ public class Client
         String input;
         String eueueu = "";
 
-        int userInput;
-
+        int userInput = -1;
+        int cont  = 1;
         int login = -1;
-        while (login == -1) {
-            userInput = Integer.parseInt(line.readLine());
 
-            if(userInput == 1 || userInput == 2) {
-                out.writeInt(userInput);
-                out.flush();
+        while (cont == 1)
+        {
+            while (login == -1)
+            {
+                userInput = Integer.parseInt(line.readLine());
+
+                if (userInput == 1 || userInput == 2) {
+                    out.writeInt(userInput);
+                    out.flush();
+
+                    switch (userInput) {
+                        case 1:
+                            System.out.println(in.readUTF());
+                            if ((input = line.readLine()) != null) {
+                                User newUser = parseLine(input);
+                                newUser.serialize(out);
+                                out.flush();
+                                System.out.println(in.readUTF());
+                            }
+                            break;
+
+                        case 2:
+                            System.out.println(in.readUTF());
+                            if ((input = line.readLine()) != null) {
+                                String[] tokens = input.split(" ");
+                                out.writeUTF(tokens[0]);
+                                out.writeUTF(tokens[1]);
+                                out.flush();
+                                String resposta = in.readUTF();
+                                System.out.println(resposta);
+                                if (resposta.equals("Login efetuado com sucesso")) {
+                                    login = 1;
+                                    eueueu = tokens[0];
+                                }
+                            }
+                            break;
+                        default:
+                    }
+                }
+            }
+
+            while (userInput != 0)
+            {
+                userInput = Integer.parseInt(line.readLine());
+
+                if (userInput != 1 && userInput != 2) {
+                    out.writeInt(userInput);
+                    out.flush();
+                }
 
                 switch (userInput) {
-                    case 1:
+                    case 3:
                         System.out.println(in.readUTF());
                         if ((input = line.readLine()) != null) {
-                            User newUser = parseLine(input);
-                            newUser.serialize(out);
+                            int local = Integer.parseInt(input);
+                            out.writeInt(local);
+                            out.flush();
+                            System.out.println("Numero de Utilizadores: " + in.readInt());
+                        }
+                        break;
+                    case 4:
+                        System.out.println(in.readUTF());
+                        if ((input = line.readLine()) != null) {
+                            out.writeUTF(eueueu);
+                            out.writeInt(Integer.parseInt(input));
+                            out.flush();
+                            System.out.println("Alterou");
+                        }
+                        break;
+                    case 5:
+                        System.out.println(in.readUTF());
+                        if ((input = line.readLine()) != null) {
+                            int local = Integer.parseInt(input);
+                            out.writeInt(local);
                             out.flush();
                             System.out.println(in.readUTF());
                         }
                         break;
-
-                    case 2:
+                    case 6:
+                    case 7:
+                        out.writeUTF(eueueu);
+                        out.flush();
+                        userInput = 0;
                         System.out.println(in.readUTF());
-                        if ((input = line.readLine()) != null) {
-                            String[] tokens = input.split(" ");
-                            out.writeUTF(tokens[0]);
-                            out.writeUTF(tokens[1]);
-                            out.flush();
-                            String resposta = in.readUTF();
-                            System.out.println(resposta);
-                            if (resposta.equals("Login efetuado com sucesso")) {
-                                login = 1;
-                                eueueu = tokens[0];
-                            }
-                        }
                         break;
+
                     default:
                 }
             }
-        }
-
-
-
-
-        while ( (userInput = Integer.parseInt(line.readLine()) ) != 0)
-        {
-            out.writeInt(userInput);
-            out.flush();
-
-            switch (userInput)
-            {
-                case 3:
-                    System.out.println(in.readUTF());
-                    if( (input = line.readLine()) != null )
-                    {
-                        int local = Integer.parseInt(input);
-                        out.writeInt(local);
-                        out.flush();
-                        System.out.println("Numero de Utilizadores: " + in.readInt());
-                    }
-                    break;
-                case 4:
-                    System.out.println(in.readUTF());
-                    if( (input = line.readLine()) != null )
-                    {
-                        out.writeUTF(eueueu);
-                        out.writeInt(Integer.parseInt(input));
-                        out.flush();
-                        System.out.println("Alterou");
-                    }
-                    break;
-                case 5:
-                    System.out.println(in.readUTF());
-                    if( (input = line.readLine()) != null )
-                    {
-                        int local = Integer.parseInt(input);
-                        out.writeInt(local);
-                        out.flush();
-                        System.out.println(in.readUTF());
-                    }
-                    break;
-
-                default:
-            }
+            login = -1;
         }
 
         socket.close();
