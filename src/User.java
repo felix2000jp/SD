@@ -1,12 +1,14 @@
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class User
 {
     private String nome;
     private String password;
     private Integer localizacao;
+    ReentrantReadWriteLock rw = new ReentrantReadWriteLock();
 
     User(User user)
     {

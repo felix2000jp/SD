@@ -23,38 +23,59 @@ public class UserList
         return this.users;
     }
 
-    public boolean addUser(DataInputStream in) throws IOException
-    {
-        User user = User.deserialize(in);
-        lock.lock();
-        try
-        {
+    public boolean addUser(DataInputStream in) throws IOException{
+        try {
+            lock.lock();
+            User user = User.deserialize(in);
             boolean b = !this.users.containsKey(user.getNome());
-            if(b)
+            if (b)
                 this.users.put(user.getNome(), user);
 
             return b;
         }
-        finally
-        {
+        finally {
             lock.unlock();
         }
     }
 
-    public Integer numeroLocal(DataInputStream in) throws IOException {
+    public Integer numeroLocal(DataInputStream in) throws IOException, InterruptedException {
         int n = 0;
         int local = in.readInt();
+        int controlo = 0;
         try {
             lock.lock();
 
             for(User user : this.users.values())
             {
-                if(user.getLocalizacao() ==  local) n++;
+                user.rw.readLock().lock();
             }
+
+            Thread.sleep(10000);
+            controlo = 1;
+
+            lock.unlock();
+
+            controlo = 2;
+
+            for(User user : this.users.values())
+            {
+                if(user.getLocalizacao() ==  local) n++;
+                user.rw.readLock().unlock();
+            }
+
+            controlo = 3;
 
             return n;
         }finally {
-            lock.unlock();
+            if(controlo == 1) {
+                lock.unlock();
+            }
+            if(controlo <= 2){
+                for(User user : this.users.values())
+                {
+                    user.rw.readLock().unlock();
+                }
+            }
         }
     }
 
@@ -68,21 +89,13 @@ public class UserList
         lock.unlock();
     }
 
-    public Integer login(String nome, String pass){
+    public synchronized Integer login(String nome, String pass){
         Integer msg = 0;
         User u;
-        try
-        {
-            lock.lock();
-            if((u = this.users.get(nome)) == null || !u.getPassword().equals(pass)) msg = 1;
-            else if( this.doenteInfetadoComOVirusCoronaVirusDezanoveTambemConhecidoComoSARSCOV2.contains(nome) ) msg = 2;
-            else if( !this.usersLogin.add(nome) ) msg = 3;
-            return msg;
-        }
-        finally
-        {
-            lock.unlock();
-        }
+        if((u = this.users.get(nome)) == null || !u.getPassword().equals(pass)) msg = 1;
+        else if( this.doenteInfetadoComOVirusCoronaVirusDezanoveTambemConhecidoComoSARSCOV2.contains(nome) ) msg = 2;
+        else if( !this.usersLogin.add(nome) ) msg = 3;
+        return msg;
     }
 
 
@@ -113,14 +126,30 @@ public class UserList
     }
 
     public void atualizaLocalizacao(String nome, int localizacao){
+        int controlo = 0;
+        User u = new User();
         try
         {
             lock.lock();
-            this.users.get(nome).setLocalizacao(localizacao);
+            u = this.users.get(nome);
+            u.rw.writeLock().lock();
+
+            controlo = 1;
+            lock.unlock();
+            controlo = 2;
+
+            u.setLocalizacao(localizacao);
+            u.rw.writeLock().unlock();
+            controlo = 3;
         }
         finally
         {
-            lock.unlock();
+            if(controlo == 1) {
+                lock.unlock();
+            }
+            if(controlo <= 2)
+                u.rw.writeLock().unlock();
+
         }
 
 
