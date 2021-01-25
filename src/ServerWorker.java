@@ -54,8 +54,8 @@ class ServerWorker implements Runnable {
                             users.atualizaLocalizacao(in);
                             break;
                         case 23: // haAlguem
-                            cond = this.users.numeroLocal(in);
-                            resposta = View.haPessoasServidor(cond);
+                            b = this.users.possoIr(in);
+                            resposta = View.haPessoasServidor(b);
                             out.writeUTF(resposta);
                             out.flush();
                             break;
@@ -77,6 +77,10 @@ class ServerWorker implements Runnable {
                 catch (EOFException e)
                 {
                     isOpen = false;
+                }
+                catch (InterruptedException e)
+                {
+                    e.printStackTrace();
                 }
             }
 
