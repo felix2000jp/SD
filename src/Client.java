@@ -18,6 +18,7 @@ public class Client
         Socket socket = new Socket("localhost", 12345);
         DataInputStream in = new DataInputStream( new BufferedInputStream(socket.getInputStream()) );
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+        Thread [] threads = new Thread[4];
         String input;
         String eueueu = "";
         String local;
@@ -86,12 +87,16 @@ public class Client
                         View.responde("Alterou");
                         break;
                     case 3: // Existem pessoa num local?
-                        local = View.nrPessoasPorLocal();
+                        String locals = View.nrPessoasPorLocal();
 
-                        out.writeInt(userInput + 20);
-                        out.writeUTF(local);
-                        out.flush();
-                        View.responde(in.readUTF());
+                        threads[2] = new Thread(() -> {
+                            try {
+                                Teste.teste3(locals, in, out);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        });
+                        threads[2].start();
                         break;
                     case 4: // Está Infetado
                         out.writeInt(userInput + 20);

@@ -47,23 +47,21 @@ public class UserList
         int localizacaoX = Integer.parseInt(tokens[0]);
         int localizacaoY = Integer.parseInt(tokens[1]);
 
-        //lock.lock();
+        lock.lock();
 
-        /*
         for(User user : this.users.values())
         {
             user.rw.readLock().lock();
         }
-        */
 
-        //lock.unlock();
-        lock.lock();
+
+        lock.unlock();
         for(User user : this.users.values())
         {
             if(user.getLocalizacaoX() == localizacaoX && user.getLocalizacaoY() == localizacaoY) n++;
-           // user.rw.readLock().unlock();
+            user.rw.readLock().unlock();
         }
-        lock.unlock();
+
         return n;
     }
 
@@ -127,7 +125,6 @@ public class UserList
     {
         User u;
 
-        //lock.lock();
         String nome = in.readUTF();
         String local = in.readUTF();
         String[] tokens = local.split(" ");
@@ -137,66 +134,51 @@ public class UserList
         lock.lock();
         u = this.users.get(nome);
 
-        // u.rw.writeLock().lock();
-
-        //lock.unlock();
-        //Thread.sleep(10000);
+        u.rw.writeLock().lock();
+        System.out.println("oy");
+        condition.signalAll();
+        System.out.println("oyy");
+        lock.unlock();
 
         u.setLocalizacaoX(localizacaoX);
         u.setLocalizacaoY(localizacaoY);
-        lock.unlock();
 
-        lock.lock();
-        if( this.pedidos.containsKey(localizacaoX) )
-        {
-            if( !this.pedidos.get(localizacaoX).contains(localizacaoY) ) condition.signal();
-        }
-        else condition.signal();
-        lock.unlock();
-
-
-        //u.rw.writeLock().unlock();
-
+        u.rw.writeLock().unlock();
     }
 
-    public Boolean possoIr(DataInputStream in) throws IOException, InterruptedException
+    public boolean possoIr(DataInputStream in) throws IOException, InterruptedException
     {
-        Boolean b = false;
+        boolean b = false;
         String local = in.readUTF();
         String[] tokens = local.split(" ");
         Integer localizacaoX = Integer.parseInt(tokens[0]);
         Integer localizacaoY = Integer.parseInt(tokens[1]);
 
+
         lock.lock();
-        for(User user : this.users.values())
-        {
-            if (user.getLocalizacaoX() == localizacaoX && user.getLocalizacaoY() == localizacaoY) {
-                b = true;
-                break;
+        while (!b) {
+            b = true;
+
+            System.out.println("yo");
+
+            for (User user : this.users.values()) {
+                if (user.getLocalizacaoX() == localizacaoX && user.getLocalizacaoY() == localizacaoY) {
+                    b = false;
+                }
             }
+
+            System.out.println("yoo");
+            if(!b) {
+                condition.await();
+            }
+
+            System.out.println("yooo");
         }
         lock.unlock();
 
-        lock.lock();
-        while(b)
-        {
-            List<Integer> ls = new ArrayList<>();
-            ls.add(localizacaoY);
-            if(this.pedidos.containsKey(localizacaoX))
-            {
-                if (!this.pedidos.get(localizacaoX).isEmpty())
-                    ls.addAll(this.pedidos.get(localizacaoX));
-            }
+        System.out.println("yoooo");
 
-            this.pedidos.put(localizacaoX,ls);
 
-            this.condition.await();
-            b = false;
-
-            ls.remove(localizacaoY);
-            if(!ls.isEmpty()) this.pedidos.put(localizacaoX, ls);
-        }
-        lock.unlock();
         return b;
     }
 

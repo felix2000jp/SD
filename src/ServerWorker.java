@@ -54,6 +54,7 @@ class ServerWorker implements Runnable {
                             users.atualizaLocalizacao(in);
                             break;
                         case 23: // haAlguem
+                            System.out.println("yoo");
                             b = this.users.possoIr(in);
                             resposta = View.haPessoasServidor(b);
                             out.writeUTF(resposta);

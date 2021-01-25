@@ -160,7 +160,7 @@ public class View {
 
     public static String haPessoasServidor(Boolean cond)
     {
-        if(cond) return "Tem pessoas no local";
+        if(!cond) return "Tem pessoas no local";
         else return "É seguro ir para o lugar";
 
     }

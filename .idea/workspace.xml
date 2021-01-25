@@ -21,12 +21,16 @@
   <component name="ChangeListManager">
     <list default="true" id="310aaa0d-8876-42b9-bd29-701478dbe164" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/SD/Client.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/SD/Client.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/SD/Localizacao.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/SD/Mapa.class" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/SD/ServerWorker.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/SD/ServerWorker.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/SD/UserList.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/SD/UserList.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/out/production/SD/View.class" beforeDir="false" afterPath="$PROJECT_DIR$/out/production/SD/View.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Client.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Client.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Localizacao.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Mapa.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Server.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/User.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/User.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ServerWorker.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ServerWorker.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/UserList.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/UserList.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/View.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/View.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -96,6 +100,8 @@
       <option name="presentableId" value="Default" />
       <updated>1610060121962</updated>
       <workItem from="1611010294352" duration="5822000" />
+      <workItem from="1611588515410" duration="3021000" />
+      <workItem from="1611591580973" duration="2948000" />
     </task>
     <servers />
   </component>
@@ -113,16 +119,5 @@
       </map>
     </option>
     <option name="oldMeFiltersMigrated" value="true" />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/User.java</url>
-          <line>37</line>
-          <option name="timeStamp" value="1" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
   </component>
 </project>
