@@ -6,10 +6,9 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class UserList
 {
-    private Map<String, User> users;
-    private Set<String> usersLogin;
-    private Set<String> doentes;
-    private Map<Integer,List<Integer>> pedidos;
+    private Map<String,User> users;                        // Utilizadores
+    private Set<String> usersLogin;                        // Utilizadores Logados
+    private Set<String> doentes;                           // Utilizadores Infetados
     private ReentrantLock lock = new ReentrantLock();
     private Condition condition = lock.newCondition();
 
@@ -18,7 +17,6 @@ public class UserList
         this.users = new HashMap<>();
         this.doentes = new HashSet<>();
         this.usersLogin = new HashSet<>();
-        this.pedidos = new HashMap<>();
     }
 
     public boolean addUser(DataInputStream in) throws IOException
@@ -28,8 +26,8 @@ public class UserList
             User user = User.deserialize(in);
 
             lock.lock();
-            boolean b = !this.users.containsKey(user.getNome());
-            if (b) this.users.put(user.getNome(), user);
+            boolean b = !this.users.containsKey(user.getNome()); // Se um utilizador com o mesmo nome não
+            if (b) this.users.put(user.getNome(), user);         // existir então adiconamos
 
             return b;
         }
@@ -37,6 +35,24 @@ public class UserList
         {
             lock.unlock();
         }
+    }
+
+    public Integer login(DataInputStream in) throws IOException
+    {
+        String login = in.readUTF();
+        String[] tokens = login.split(" ");
+        String nome = tokens[0];
+        String pass = tokens[1];
+        User u;
+        Integer msg = 0;
+
+        lock.lock();
+        if((u = this.users.get(nome)) == null || !u.getPassword().equals(pass)) msg = 1;  // Erro 1 (Nome ou pass incorreto)
+        else if( this.doentes.contains(nome) ) msg = 2;                                   // Erro 2 (Está doente)
+        else if( !this.usersLogin.add(nome) ) msg = 3;                                    // Erro 3 (Já está logado noutro client)
+        lock.unlock();
+
+        return msg;
     }
 
     public Integer numeroLocal(DataInputStream in) throws IOException
@@ -47,81 +63,20 @@ public class UserList
         int localizacaoX = Integer.parseInt(tokens[0]);
         int localizacaoY = Integer.parseInt(tokens[1]);
 
-        lock.lock();
-
+        lock.lock();                                                       // Lock no sistema
+        for(User user : this.users.values()) user.rw.readLock().lock();    // Percorrer os utilizadores e dar lock em cada
+        lock.unlock();                                                     // unlock no sistema
         for(User user : this.users.values())
         {
-            user.rw.readLock().lock();
-        }
-
-
-        lock.unlock();
-        for(User user : this.users.values())
-        {
+            // Cada Utilizador na localizacao dada incrementa
             if(user.getLocalizacaoX() == localizacaoX && user.getLocalizacaoY() == localizacaoY) n++;
-            user.rw.readLock().unlock();
+            user.rw.readLock().unlock();       // Á medida que percorremos os utilizadores damos unlock
         }
 
         return n;
     }
 
-    public Integer login(DataInputStream in) throws IOException
-    {
-        try
-        {
-            lock.lock();
-
-            String login = in.readUTF();
-            String[] tokens = login.split(" ");
-            String nome = tokens[0];
-            String pass = tokens[1];
-            Integer msg = 0;
-            User u;
-
-            if((u = this.users.get(nome)) == null || !u.getPassword().equals(pass)) msg = 1;
-            else if( this.doentes.contains(nome) ) msg = 2;
-            else if( !this.usersLogin.add(nome) ) msg = 3;
-            return msg;
-        }
-        finally
-        {
-            lock.unlock();
-        }
-    }
-
-    public Integer terminaSessao(DataInputStream in) throws IOException
-    {
-        try
-        {
-            String nome = in.readUTF();
-
-            lock.lock();
-            this.usersLogin.remove(nome);
-            return 0;
-        }
-        finally
-        {
-            lock.unlock();
-        }
-    }
-
-    public Integer infetado(DataInputStream in) throws IOException
-    {
-        try
-        {
-            String nome = in.readUTF();
-
-            lock.lock();
-            this.doentes.add(nome);
-            return 0;
-        }
-        finally
-        {
-            lock.unlock();
-        }
-    }
-
-    public void atualizaLocalizacao(DataInputStream in) throws IOException, InterruptedException
+    public void atualizaLocalizacao(DataInputStream in) throws IOException
     {
         User u;
 
@@ -131,22 +86,19 @@ public class UserList
         Integer localizacaoX = Integer.parseInt(tokens[0]);
         Integer localizacaoY = Integer.parseInt(tokens[1]);
 
-        lock.lock();
+        lock.lock();               // Lock no Sistema
         u = this.users.get(nome);
+        u.rw.writeLock().lock();  // Lock no utilizador que estamos a alterar
+        condition.signalAll();    // Signal para quem está à espera
+        lock.unlock();            // Unlock no Sistema
 
-        u.rw.writeLock().lock();
-        System.out.println("oy");
-        condition.signalAll();
-        System.out.println("oyy");
-        lock.unlock();
+        u.setLocalizacaoX(localizacaoX);  // Alterar Localizacao X
+        u.setLocalizacaoY(localizacaoY);  // Alterar Localizacao Y
 
-        u.setLocalizacaoX(localizacaoX);
-        u.setLocalizacaoY(localizacaoY);
-
-        u.rw.writeLock().unlock();
+        u.rw.writeLock().unlock();        // Unlock no utilizador que estamos a alterar
     }
 
-    public boolean possoIr(DataInputStream in) throws IOException, InterruptedException
+    public String possoIr(DataInputStream in) throws IOException, InterruptedException
     {
         boolean b = false;
         String local = in.readUTF();
@@ -154,32 +106,41 @@ public class UserList
         Integer localizacaoX = Integer.parseInt(tokens[0]);
         Integer localizacaoY = Integer.parseInt(tokens[1]);
 
-
         lock.lock();
-        while (!b) {
+        while (!b)
+        {
             b = true;
 
-            System.out.println("yo");
-
-            for (User user : this.users.values()) {
-                if (user.getLocalizacaoX() == localizacaoX && user.getLocalizacaoY() == localizacaoY) {
-                    b = false;
+            for (User user : this.users.values())  // Verifica se há algum utilizador no local para onde se quer ir
+            {
+                if (user.getLocalizacaoX() == localizacaoX && user.getLocalizacaoY() == localizacaoY)
+                {
+                    b = false;                     // Caso haja alguém no local
+                    break;
                 }
             }
-
-            System.out.println("yoo");
-            if(!b) {
-                condition.await();
-            }
-
-            System.out.println("yooo");
+            if(!b) condition.await();              // Enquanto b == false o processo espera
         }
         lock.unlock();
 
-        System.out.println("yoooo");
+        return local;
+    }
 
+    public void infetado(DataInputStream in) throws IOException
+    {
+        String nome = in.readUTF();
 
-        return b;
+        lock.lock();
+        this.doentes.add(nome);  // Adiciona aos utilizadores doentes
+        lock.unlock();
+    }
+
+    public void terminaSessao(DataInputStream in) throws IOException
+    {
+        String nome = in.readUTF();
+        lock.lock();
+        this.usersLogin.remove(nome);  // Removemos da Lista de Users Logados
+        lock.unlock();
     }
 
 

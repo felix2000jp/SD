@@ -14,17 +14,12 @@ class ServerWorker implements Runnable {
     @Override
     public void run()
     {
-
         try
         {
             DataOutputStream out = new DataOutputStream(socket.getOutputStream());
             DataInputStream in = new DataInputStream(new BufferedInputStream(this.socket.getInputStream()));
             boolean isOpen = true;
             int query;
-
-            int cond;
-            boolean b;
-            String resposta;
 
             while (isOpen)
             {
@@ -34,43 +29,25 @@ class ServerWorker implements Runnable {
                     switch (query)
                     {
                         case 11: // regista
-                            b = this.users.addUser(in);
-                            resposta = View.registoServidor(b);
-                            out.writeUTF(resposta);
-                            out.flush();
+                            Options.receiveRegista(in,out,this.users);
                             break;
                         case 12: // login
-                            cond = users.login(in);
-                            resposta = View.loginServidor(cond);
-                            out.writeUTF(resposta);
-                            out.flush();
+                            Options.receiveLogin(in,out,this.users);
                             break;
                         case 21:  // nrDePessoasPorLocal
-                            cond = this.users.numeroLocal(in);
-                            out.writeInt(cond);
-                            out.flush();
+                            Options.receiveOption1(in,out,this.users);
                             break;
                         case 22: // atualizaLocalizacao
-                            users.atualizaLocalizacao(in);
+                            Options.receiveOption2(in,out,this.users);
                             break;
                         case 23: // haAlguem
-                            System.out.println("yoo");
-                            b = this.users.possoIr(in);
-                            resposta = View.haPessoasServidor(b);
-                            out.writeUTF(resposta);
-                            out.flush();
+                            Options.receiveOption3(in,out,this.users);
                             break;
                         case 24: // touInfetado
-                            this.users.infetado(in);
-                            resposta = View.infetadoServidor();
-                            out.writeUTF(resposta);
-                            out.flush();
+                            Options.receiveOption4(in,out,this.users);
                             break;
                         case 25: // terminaSessao
-                            this.users.terminaSessao(in);
-                            resposta = View.terminarSessaoServidor();
-                            out.writeUTF(resposta);
-                            out.flush();
+                            Options.receiveOption5(in,out,this.users);
                             break;
                         default:
                     }
@@ -84,10 +61,8 @@ class ServerWorker implements Runnable {
                     e.printStackTrace();
                 }
             }
-
             socket.shutdownInput();
             socket.close();
-
         }
         catch (IOException e)
         {

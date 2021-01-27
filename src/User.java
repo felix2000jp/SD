@@ -75,6 +75,15 @@ public class User
         this.localizacaoY = localizacao;
     }
 
+    public static User parseLine (String userInput)
+    {
+        String[] tokens = userInput.split(" ");
+        if (tokens[2].equals("null")) tokens[2] = null;
+        if (tokens[3].equals("null")) tokens[3] = null;
+
+        return new User(tokens[0], tokens[1], Integer.parseInt(tokens[2]), Integer.parseInt(tokens[3]));
+    }
+
     @Override
     public User clone()
     {
